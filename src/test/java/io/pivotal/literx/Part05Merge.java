@@ -15,57 +15,55 @@ import reactor.test.StepVerifier;
  */
 public class Part05Merge {
 
-	final static User MARIE = new User("mschrader", "Marie", "Schrader");
-	final static User MIKE = new User("mehrmantraut", "Mike", "Ehrmantraut");
+    final static User MARIE = new User("mschrader", "Marie", "Schrader");
+    final static User MIKE = new User("mehrmantraut", "Mike", "Ehrmantraut");
 
-	ReactiveRepository<User> repository1 = new ReactiveUserRepository(500);
-	ReactiveRepository<User> repository2 = new ReactiveUserRepository(MARIE, MIKE);
-
-//========================================================================================
-
-	@Test
-	public void mergeWithInterleave() {
-		Flux<User> flux = mergeFluxWithInterleave(repository1.findAll(), repository2.findAll());
-		StepVerifier.create(flux)
-				.expectNext(MARIE, MIKE, User.SKYLER, User.JESSE, User.WALTER, User.SAUL)
-				.verifyComplete();
-	}
-
-	// TODO Merge flux1 and flux2 values with interleave
-	Flux<User> mergeFluxWithInterleave(Flux<User> flux1, Flux<User> flux2) {
-		return null;
-	}
+    ReactiveRepository<User> repository1 = new ReactiveUserRepository(500);
+    ReactiveRepository<User> repository2 = new ReactiveUserRepository(MARIE, MIKE);
 
 //========================================================================================
 
-	@Test
-	public void mergeWithNoInterleave() {
-		Flux<User> flux = mergeFluxWithNoInterleave(repository1.findAll(), repository2.findAll());
-		StepVerifier.create(flux)
-				.expectNext(User.SKYLER, User.JESSE, User.WALTER, User.SAUL, MARIE, MIKE)
-				.verifyComplete();
-	}
+    @Test
+    public void mergeWithInterleave() {
+        Flux<User> flux = mergeFluxWithInterleave(repository1.findAll(), repository2.findAll());
+        StepVerifier.create(flux)
+                .expectNext(MARIE, MIKE, User.SKYLER, User.JESSE, User.WALTER, User.SAUL)
+                .verifyComplete();
+    }
 
-	// TODO Merge flux1 and flux2 values with no interleave (flux1 values and then flux2 values)
-	Flux<User> mergeFluxWithNoInterleave(Flux<User> flux1, Flux<User> flux2) {
-		return null;
-	}
+    // Merge flux1 and flux2 values with interleave
+    Flux<User> mergeFluxWithInterleave(Flux<User> flux1, Flux<User> flux2) {
+        return Flux.merge(flux2, flux1);
+    }
 
 //========================================================================================
 
-	@Test
-	public void multipleMonoToFlux() {
-		Mono<User> skylerMono = repository1.findFirst();
-		Mono<User> marieMono = repository2.findFirst();
-		Flux<User> flux = createFluxFromMultipleMono(skylerMono, marieMono);
-		StepVerifier.create(flux)
-				.expectNext(User.SKYLER, MARIE)
-				.verifyComplete();
-	}
+    @Test
+    public void mergeWithNoInterleave() {
+        Flux<User> flux = mergeFluxWithNoInterleave(repository1.findAll(), repository2.findAll());
+        StepVerifier.create(flux)
+                .expectNext(User.SKYLER, User.JESSE, User.WALTER, User.SAUL, MARIE, MIKE)
+                .verifyComplete();
+    }
 
-	// TODO Create a Flux containing the value of mono1 then the value of mono2
-	Flux<User> createFluxFromMultipleMono(Mono<User> mono1, Mono<User> mono2) {
-		return null;
-	}
+    // Merge flux1 and flux2 values with no interleave (flux1 values and then flux2 values)
+    Flux<User> mergeFluxWithNoInterleave(Flux<User> flux1, Flux<User> flux2) {
+        return Flux.mergeSequential(flux1, flux2);
+    }
+//========================================================================================
 
+    @Test
+    public void multipleMonoToFlux() {
+        Mono<User> skylerMono = repository1.findFirst();
+        Mono<User> marieMono = repository2.findFirst();
+        Flux<User> flux = createFluxFromMultipleMono(skylerMono, marieMono);
+        StepVerifier.create(flux)
+                .expectNext(User.SKYLER, MARIE)
+                .verifyComplete();
+    }
+
+    // Create a Flux containing the value of mono1 then the value of mono2
+    Flux<User> createFluxFromMultipleMono(Mono<User> mono1, Mono<User> mono2) {
+        return Flux.mergeSequential(mono1, mono2);
+    }
 }
